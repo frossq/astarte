@@ -24,7 +24,7 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding.ProveOVHdr do
   It is wrapped inside a COSE_Sign1 structure.
 
   **Important Note on COSE Headers:**
-  According to Spec 5.5.3, this message MUST include specific parameters in the 
+  According to Spec 5.5.3, this message MUST include specific parameters in the
   COSE Unprotected Headers which are NOT part of this payload struct:
   1. `CUPHNonce` (NonceTO2ProveDv): Used for freshness in TO2.ProveDevice.
   2. `CUPHOwnerPubKey`: The Owner Public Key used to verify this message's signature.
@@ -34,6 +34,7 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding.ProveOVHdr do
   use TypedStruct
 
   alias Astarte.Pairing.FDO.OwnerOnboarding.ProveOVHdr
+  alias Astarte.Pairing.FDO.OwnershipVoucher.Header, as: OVHeader
   alias Astarte.Pairing.FDO.OwnerOnboarding.SignatureInfo
   alias Astarte.Pairing.FDO.Types.Hash
   alias COSE.Messages.Sign1
@@ -45,9 +46,9 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding.ProveOVHdr do
     @typedoc "The payload to be signed inside COSE_Sign1."
 
     # 1. OVHeader
-    # The header of the Ownership Voucher. 
+    # The header of the Ownership Voucher.
     # Contains the GUID, Device Info, and the initial Owner Public Key.
-    field :ov_header, binary()
+    field :ov_header, OVHeader.t()
 
     # 2. NumOVEntries
     # The number of Ownership Voucher entries that will follow in subsequent messages.
@@ -58,7 +59,7 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding.ProveOVHdr do
     # HMAC-SHA256 or HMAC-SHA384 of the OVHeader.
     # Matches the value stored in the Device during Device Initialization (DI).
     # Verifies the device integrity (ensures it hasn't been wiped/re-initialized).
-    field :hmac, binary()
+    field :hmac, Hash.t()
 
     # 4. NonceTO2ProveOV
     # The nonce received from the Device in TO2.HelloDevice.
@@ -66,7 +67,7 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding.ProveOVHdr do
     field :nonce_to2_prove_ov, binary()
 
     # 5. eBSigInfo
-    # Contains information about the signature scheme used by the Device 
+    # Contains information about the signature scheme used by the Device
     # for attestation (e.g., key type, curve).
     field :eb_sig_info, SignatureInfo.t()
 
@@ -77,9 +78,9 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding.ProveOVHdr do
 
     # 7. helloDeviceHash
     # A SHA hash of the full TO2.HelloDevice message received earlier.
-    # Allows the Device to verify that the Hello message was not tampered with 
+    # Allows the Device to verify that the Hello message was not tampered with
     # by a Man-in-the-Middle (MitM) before reaching the Owner.
-    field :hello_device_hash, binary()
+    field :hello_device_hash, Hash.t()
 
     # 8. maxOwnerMessageSize
     # Indicates the maximum message size the Owner Service can handle.
