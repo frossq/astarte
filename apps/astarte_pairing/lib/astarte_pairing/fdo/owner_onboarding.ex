@@ -53,6 +53,7 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding do
          {:ok, session} <-
            Session.new(realm_name, hello_device, ownership_voucher, owner_private_key) do
       num_ov_entries = Enum.count(ownership_voucher.entries)
+      # TODO: need to follow the strength of the sign/verify algo?
       hello_device_hash = Hash.new(:sha256, cbor_hello_device)
       eb_sig_info = DeviceAttestation.eb_sig_info(session.device_signature)
 
@@ -81,7 +82,7 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding do
 
   defp fetch_owner_private_key(realm_name, device_id) do
     with {:ok, pem_key} <- Queries.get_owner_private_key(realm_name, device_id) do
-      COSE.Keys.from_pem(pem_key)
+      COSE.Keys.from_pem(pem_key) |> dbg()
     end
   end
 

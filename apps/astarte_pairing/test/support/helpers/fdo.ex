@@ -59,11 +59,19 @@ defmodule Astarte.Helpers.FDO do
   -----END OWNERSHIP VOUCHER-----
   """
 
-  @sample_private_key """
+  @sample_private_key_ec256 """
   -----BEGIN EC PRIVATE KEY-----
   MHcCAQEEIFlbTEE1Ce+RSqhU8FqxsY7eNb9BaBWOTw6qFv7l0DZtoAoGCCqGSM49
   AwEHoUQDQgAEocPEIHIrn08VRO5zkkDztwp72Sw0BSm0mZeLgOKkHLUPdVFFlc0E
   O82b1/S2Cwzwh8MIDDx0CN2b+IBl5bRwOw==
+  -----END EC PRIVATE KEY-----
+  """
+
+  @sample_private_key_ec384 """
+  -----BEGIN EC PRIVATE KEY-----
+  MHYCAQEEIEIqG/z7xY2e/dYxR21rS+P7W79i/XjD3t027f31j+sboAcGBQQAAADd
+  oAIBMAgGCCqGSM49AwEHoUQDQgAEy36pB90gXpX19Fp6D99b5M60h6+3b8X7Lp3E
+  m6q4m/s+e8uQ6o8054zO9y1iXW9oR5bB96l2D4Xf02L18oUfGwL9Q==
   -----END EC PRIVATE KEY-----
   """
 
@@ -100,9 +108,9 @@ defmodule Astarte.Helpers.FDO do
 
   @sample_device_guid <<175, 173, 208, 144, 202, 119, 157, 130, 245, 26, 21, 124, 53, 34, 7, 12>>
 
-  @sample_request_rc CreateRequest.changeset(%CreateRequest{}, %{
+  @sample_request_rc_ec256 CreateRequest.changeset(%CreateRequest{}, %{
                        ownership_voucher: @sample_voucher,
-                       private_key: @sample_private_key
+                       private_key: @sample_private_key_ec256
                      })
                      |> Ecto.Changeset.apply_action!(:insert)
 
@@ -142,16 +150,16 @@ defmodule Astarte.Helpers.FDO do
   }
 
   def sample_voucher, do: @sample_voucher
-  def sample_cbor_voucher, do: @sample_request_rc.cbor_ownership_voucher
-  def sample_private_key, do: @sample_private_key
-  def sample_extracted_private_key, do: @sample_request_rc.extracted_private_key
+  def sample_cbor_voucher_ec256, do: @sample_request_rc_ec256.cbor_ownership_voucher
+  def sample_private_key_ec256, do: @sample_private_key_ec256
+  def sample_extracted_private_key_ec256, do: @sample_request_rc_ec256.extracted_private_key
   def sample_extracted_rsa_private_key, do: @sample_request_rsa.extracted_private_key
   def sample_rsa_private_key, do: @sample_rsa_private_key
   def sample_device_guid, do: @sample_device_guid
   def sample_rv_info, do: @sample_rv_info
 
-  def sample_ownership_voucher do
-    {:ok, voucher} = OwnershipVoucher.decode_cbor(sample_cbor_voucher())
+  def sample_ownership_voucher_ec256 do
+    {:ok, voucher} = OwnershipVoucher.decode_cbor(sample_cbor_voucher_ec256())
     voucher
   end
 

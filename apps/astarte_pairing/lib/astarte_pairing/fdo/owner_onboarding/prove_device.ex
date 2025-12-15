@@ -117,13 +117,14 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding.ProveDevice do
     }
   end
 
+  @spec encode_sign(ProveDevice.t(), %ECC{}) :: binary()
   def encode_sign(%ProveDevice{} = prove_device_payload, priv_key) do
     # TODO add a EAToken.encode() function to create the EAT payload
     eat_cbor_payload =
       prove_device_payload
       |> prove_device_payload_to_cbor()
 
-    phdr = %{alg: :es256}
+    phdr = %{alg: priv_key.alg}
 
     uhdr = %{@euph_nonce => prove_device_payload.nonce_to2_setup_dv |> COSE.tag_as_byte()}
 

@@ -56,7 +56,8 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding.Session do
     } = hello_device
 
     with {:ok, owner_random, xa} <- SessionKey.new(kex, owner_key),
-         {:ok, device_signature} <- SignatureInfo.validate(easig_info, ownership_voucher),
+         {:ok, device_signature} <- SignatureInfo.validate_device_public_key(easig_info, ownership_voucher),
+         :ok <- SignatureInfo.validate_cryptography_match(device_signature, owner_key),
          signature_params = SignatureInfo.device_signature_to_database_params(device_signature),
          session_params = %TO2Session{
            device_id: device_id,

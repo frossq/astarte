@@ -60,9 +60,12 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding.SignatureInfo do
     end
   end
 
-  @spec validate(t(), OwnershipVoucher.t()) :: {:ok, device_signature()} | :error
-  def validate(sig_info, ownership_voucher) do
+  @spec validate_device_public_key(t(), OwnershipVoucher.t()) ::
+          {:ok, device_signature()} | :error
+  def validate_device_public_key(sig_info, ownership_voucher) do
     with {:ok, device_public_key} <- OwnershipVoucher.device_public_key(ownership_voucher) do
+      dbg(device_public_key)
+
       case {sig_info, device_public_key} do
         {{:eipd10, _gid}, nil} -> {:ok, sig_info}
         {{:eipd11, _gid}, nil} -> {:ok, sig_info}
@@ -71,6 +74,23 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding.SignatureInfo do
         {:es384, pub_key} -> parse_es384_key(pub_key)
         _ -> :error
       end
+    end
+  end
+
+  # cryptography used for signing/verification in OV must be shared
+  # between Device and Owner (refer to spec section 3.4)
+  @spec validate_cryptography_match({t(), any()}, %ECC{}) :: :ok | {:error, atom()}
+  def validate_cryptography_match(
+        {device_signature_type, _} = _device_signature,
+        %ECC{alg: owner_key_type} = _owner_key
+      ) do
+    case device_signature_type == owner_key_type do
+      # TODO understand if we can/want to allow some "renegotiation"
+      true ->
+        :ok
+
+      _ ->
+        {:error, :something}
     end
   end
 

@@ -27,8 +27,8 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding.SessionTest do
 
   setup_all do
     hello_device = HelloDevice.generate()
-    ownership_voucher = sample_ownership_voucher()
-    owner_key = sample_extracted_private_key()
+    ownership_voucher = sample_ownership_voucher_ec256()
+    owner_key = sample_extracted_private_key_ec256()
     device_key = COSE.Keys.ECC.generate(:es256)
     {:ok, device_random, xb} = SessionKey.new(hello_device.kex_name, device_key)
 
@@ -71,7 +71,7 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding.SessionTest do
         ownership_voucher: ownership_voucher
       } = context
 
-      assert {:ok, session} = Session.new(realm_name, hello_device, ownership_voucher, owner_key)
+      assert {:ok, session} = Session.new(realm_name, hello_device, ownership_voucher, owner_key) |> dbg()
       assert is_binary(session.key)
       assert session.prove_dv_nonce
       assert session.owner_random

@@ -21,10 +21,46 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding.SessionKey do
   alias COSE.Keys.ECC
   alias COSE.Keys.Symmetric
 
-  def new("ECDH256", %ECC{} = owner_key) do
-    random = :crypto.strong_rand_bytes(16)
-    xa = random_ecdh(owner_key, random)
+  # the Owner Key type determines the algorithm to be used (refer to spec section 3.6.5)
+  def new(device_kex, %ECC{alg: owner_key_alg} = owner_key) do
+    case {device_kex, owner_key_alg} do
+      {_, :es256} ->
+        create_ecdh_struct(:es256, owner_key)
 
+      {_, :es384} ->
+        create_ecdh_struct(:es384, owner_key)
+
+      _ ->
+        # TODO find proper error
+        :nok
+    end
+  end
+
+  # def new("ECDH256", %ECC{} = owner_key) do
+  #   random = :crypto.strong_rand_bytes(16)
+  #   xa = random_ecdh(owner_key, random)
+  #   dbg(byte_size(xa))
+  #   {:ok, random, xa}
+  # end
+
+  # def new("ECDH384", %ECC{} = owner_key) do
+  #   random = :crypto.strong_rand_bytes(16)
+  #   xa = random_ecdh(owner_key, random)
+
+  #   {:ok, random, xa}
+  # end
+
+  defp create_ecdh_struct(type, owner_key) do
+    random =
+      case type do
+        :es256 ->
+          :crypto.strong_rand_bytes(16)
+
+        :es384 ->
+          :crypto.strong_rand_bytes(48)
+      end
+
+    xa = random_ecdh(owner_key, random)
     {:ok, random, xa}
   end
 
