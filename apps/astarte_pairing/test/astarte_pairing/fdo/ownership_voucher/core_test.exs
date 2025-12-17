@@ -24,7 +24,7 @@ defmodule Astarte.Pairing.FDO.OwnershipVoucher.CoreTest do
 
   import Astarte.Helpers.FDO
 
-  @decoded_voucher sample_voucher() |> Core.decode_ownership_voucher() |> elem(1)
+  @decoded_voucher sample_voucher_ec256() |> Core.decode_ownership_voucher() |> elem(1)
 
   setup :verify_on_exit!
 

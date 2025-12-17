@@ -26,20 +26,26 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding.SessionTest do
   import Astarte.Helpers.FDO
 
   setup_all do
-    hello_device = HelloDevice.generate()
-    ownership_voucher = sample_ownership_voucher_ec256()
-    owner_key = sample_extracted_private_key_ec256()
-    device_key = COSE.Keys.ECC.generate(:es256)
-    {:ok, device_random, xb} = SessionKey.new(hello_device.kex_name, device_key)
+    hello_device_ec256 = HelloDevice.generate(:ec256)
+    ownership_voucher_ec256 = sample_ownership_voucher_ec256()
+    owner_key_ec256 = sample_extracted_private_key_ec256()
+    device_key_ec256 = COSE.Keys.ECC.generate(:es256)
+    {:ok, device_random_ec256, xb_ec256} = SessionKey.new(hello_device_ec256.kex_name, device_key_ec256)
 
-    %{
-      hello_device: hello_device,
-      ownership_voucher: ownership_voucher,
-      owner_key: owner_key,
-      device_key: device_key,
-      device_random: device_random,
-      xb: xb
+    ec256_setup = %{
+      hello_device: hello_device_ec256,
+      ownership_voucher: ownership_voucher_ec256,
+      owner_key: owner_key_ec256,
+      device_key: device_key_ec256,
+      device_random: device_random_ec256,
+      xb: xb_ec256
     }
+
+    # hello_device_ec384 = HelloDevice.generate(:ec384)
+    # ownership_voucher_ec384 = sample_ownership_voucher_ec384()
+    # owner_key_ec384 = sample_extracted_private_key_ec384()
+    # device_key_ec384 = COSE.Keys.ECC.generate(:es384)
+    # {:ok, device_random_ec384, xb_ec384} = SessionKey.new(hello_device_ec384.kex_name, device_key_ec384)
   end
 
   setup context do

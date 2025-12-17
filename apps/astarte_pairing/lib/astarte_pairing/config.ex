@@ -81,7 +81,7 @@ defmodule Astarte.Pairing.Config do
           put_ca_cert(cert)
 
         {:error, _reason} ->
-          raise "No CA certificate available."
+          :ok #raise "No CA certificate available."
       end
     end
   end

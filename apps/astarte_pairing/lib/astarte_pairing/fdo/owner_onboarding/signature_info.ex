@@ -33,6 +33,8 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding.SignatureInfo do
   @eipd10 90
   @eipd11 91
 
+  @supported_algorithms [:es256, :es384]
+
   def decode(sig_info) do
     case sig_info do
       [@es256, %CBOR.Tag{tag: :bytes, value: <<>>}] -> {:ok, :es256}
@@ -83,13 +85,16 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding.SignatureInfo do
   def validate_cryptography_match(
         {device_signature_type, _} = _device_signature,
         %ECC{alg: owner_key_type} = _owner_key
-      ) do
+      )
+      when device_signature_type in @supported_algorithms and
+             owner_key_type in @supported_algorithms do
     case device_signature_type == owner_key_type do
       # TODO understand if we can/want to allow some "renegotiation"
       true ->
         :ok
 
       _ ->
+        # TODO find proper error
         {:error, :something}
     end
   end

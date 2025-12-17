@@ -104,14 +104,20 @@ defmodule Astarte.Pairing.FDO.OwnerOnboarding.HelloDevice do
   end
 
   @doc false
-  def generate do
+  def generate(alg \\ :ec256) when alg in [:ec256, :ec384] do
+    kex_name =
+      case alg do
+        :ec256 -> "ECDH256"
+        :ec384 -> "ECDH384"
+      end
+
     %HelloDevice{
       max_size: 1_000,
       device_id: Astarte.Core.Device.random_device_id(),
       nonce: :crypto.strong_rand_bytes(16),
-      kex_name: "ECDH256",
+      kex_name: kex_name,
       cipher_name: :aes_256_gcm,
-      easig_info: :es256
+      easig_info: alg
     }
   end
 
