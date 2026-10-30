@@ -271,6 +271,7 @@ defmodule Astarte.DataAccess.Helpers.Database do
         description varchar,
         doc varchar,
         required boolean,
+        encrypted boolean,
 
         PRIMARY KEY ((interface_id), endpoint_id)
       );
@@ -323,6 +324,8 @@ defmodule Astarte.DataAccess.Helpers.Database do
       stringarray_value list<varchar>,
       binaryblobarray_value list<blob>,
       datetimearray_value list<timestamp>,
+      encryptedblob_value blob,
+      encrypted_dek blob,
 
       PRIMARY KEY((device_id, interface_id), endpoint_id, path)
     );
@@ -430,6 +433,14 @@ defmodule Astarte.DataAccess.Helpers.Database do
     """
       INSERT INTO :keyspace.individual_properties (device_id, interface_id, endpoint_id, path, longinteger_value) VALUES
         (7f454c46-0201-0100-0000-000000000000, 798b93a5-842e-bbad-2e4d-d20306838051, 8ebb62b3-60c1-4ba2-4172-9ddedd809c9f, '/weekSchedule/4/stop', 18);
+    """,
+    """
+      INSERT INTO :keyspace.individual_properties (device_id, interface_id, endpoint_id, path, longinteger_value) VALUES
+        (7f454c46-0201-0100-0000-000000000000, 798b93a5-842e-bbad-2e4d-d20306838051, 8ebb62b3-60c1-4ba2-4172-9ddedd809c9f, '/weekSchedule/5/stop', null);
+    """,
+    """
+      INSERT INTO :keyspace.individual_properties (device_id, interface_id, endpoint_id, path, encryptedblob_value, encrypted_dek) VALUES
+        (7f454c46-0201-0100-0000-000000000000, 798b93a5-842e-bbad-2e4d-d20306838051, 4f92c10d-8ea3-4d2b-927b-fb32ee099ca5, '/encrypted_pixel', 0xdead, 0xbeef);
     """,
     """
       INSERT INTO :keyspace.individual_properties (device_id, interface_id, endpoint_id, path, string_value) VALUES
@@ -883,6 +894,21 @@ defmodule Astarte.DataAccess.Helpers.Database do
         reliability: :unreliable,
         retention: :discard,
         value_type: :longinteger
+      },
+      %Endpoint{
+        interface_id: "798b93a5-842e-bbad-2e4d-d20306838051",
+        endpoint_id: "4f92c10d-8ea3-4d2b-927b-fb32ee099ca5",
+        allow_unset: false,
+        endpoint: "/encrypted_pixel",
+        expiry: 0,
+        interface_major_version: 0,
+        interface_minor_version: 3,
+        interface_name: "com.test.LCDMonitor",
+        interface_type: :properties,
+        reliability: :unreliable,
+        retention: :discard,
+        value_type: :longinteger,
+        encrypted: true
       },
       %Endpoint{
         interface_id: "0a0da77d-85b5-93d9-d4d2-bd26dd18c9af",
