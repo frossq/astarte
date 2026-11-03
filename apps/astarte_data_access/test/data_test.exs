@@ -103,7 +103,7 @@ defmodule Astarte.DataAccess.Data.XandraTest do
                mapping,
                "/weekSchedule/3/stop"
              ) ==
-               {:ok, {16, nil}}
+               {:ok, 16}
     end
 
     test "returns error if the property is not set", %{
@@ -133,14 +133,14 @@ defmodule Astarte.DataAccess.Data.XandraTest do
                {:error, :property_not_set}
     end
 
-    test "returns the encrypted property along with its DEK if the mapping is encrypted",
+    test "returns the decrypted property value if the mapping is encrypted",
          %{
            realm_name: realm_name,
            device_id: device_id,
            descriptor: descriptor,
            encrypted_mapping: encrypted_mapping
          } do
-      assert {:ok, {value, dek}} =
+      assert {:ok, value} =
                Data.fetch_property(
                  realm_name,
                  device_id,
@@ -149,7 +149,7 @@ defmodule Astarte.DataAccess.Data.XandraTest do
                  "/encrypted_pixel"
                )
 
-      assert is_binary(value) and is_binary(dek)
+      assert is_binary(value)
     end
   end
 

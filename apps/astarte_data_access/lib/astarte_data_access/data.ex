@@ -29,9 +29,12 @@ defmodule Astarte.DataAccess.Data do
   alias Astarte.DataAccess.Realms.IndividualProperty
   alias Astarte.DataAccess.Realms.Realm
   alias Astarte.DataAccess.Repo
+  alias Astarte.Secrets
   alias Ecto.UUID
 
   import Ecto.Query
+
+  require Logger
 
   @spec fetch_property(
           String.t(),
@@ -51,17 +54,6 @@ defmodule Astarte.DataAccess.Data do
       when is_binary(device_id) and is_binary(path) do
     keyspace = Realm.keyspace_name(realm)
 
-    value_column =
-      case mapping.encrypted do
-        true ->
-          :encryptedblob_value
-
-        _ ->
-          mapping.value_type
-          |> CQLUtils.type_to_db_column_name()
-          |> String.to_atom()
-      end
-
     device_id = UUID.cast!(device_id)
     interface_id = UUID.cast!(interface_descriptor.interface_id)
     endpoint_id = UUID.cast!(mapping.endpoint_id)
@@ -69,17 +61,26 @@ defmodule Astarte.DataAccess.Data do
     fetch_clause = fetch_clause(device_id, interface_id, endpoint_id, path)
 
     query =
-      from s in interface_descriptor.storage,
-        prefix: ^keyspace,
-        select: {field(s, ^value_column), s.encrypted_dek}
+      case mapping.encrypted do
+        true ->
+          from s in interface_descriptor.storage,
+            prefix: ^keyspace,
+            select: %{encrypted_value: s.encryptedblob_value, encrypted_dek: s.encrypted_dek}
+
+        _ ->
+          value_column =
+            mapping.value_type
+            |> CQLUtils.type_to_db_column_name()
+            |> String.to_atom()
+
+          from s in interface_descriptor.storage,
+            prefix: ^keyspace,
+            select: %{value: field(s, ^value_column)}
+      end
 
     consistency = Consistency.device_info(:read)
 
-    case Repo.fetch_by(query, fetch_clause, consistency: consistency) do
-      {:ok, {nil, _}} -> {:error, :property_not_set}
-      {:ok, result} -> {:ok, result}
-      {:error, :not_found} -> {:error, :property_not_set}
-    end
+    Repo.fetch_by(query, fetch_clause, consistency: consistency) |> normalize_fetch_result(realm)
   end
 
   @spec path_exists?(
@@ -154,5 +155,64 @@ defmodule Astarte.DataAccess.Data do
 
   defp fetch_clause(device_id, interface_id, endpoint_id, path) do
     [device_id: device_id, interface_id: interface_id, endpoint_id: endpoint_id, path: path]
+  end
+
+  defp normalize_fetch_result({:error, :not_found}, _realm) do
+    {:error, :property_not_set}
+  end
+
+  # plaintext property value
+  defp normalize_fetch_result({:ok, %{value: value}}, _realm) do
+    case value do
+      nil ->
+        {:error, :property_not_set}
+
+      value ->
+        {:ok, value}
+    end
+  end
+
+  # encrypted property value
+  defp normalize_fetch_result(
+         {:ok, %{encrypted_value: encrypted_value, encrypted_dek: encrypted_dek}},
+         realm
+       ) do
+    case encrypted_value do
+      nil ->
+        {:error, :property_not_set}
+
+      val ->
+        {:ok, decrypt_property_value(val, encrypted_dek, realm)}
+    end
+  end
+
+  defp decrypt_property_value(nil, _dek, _realm) do
+    nil
+  end
+
+  # should never happen but let's be defensive
+  defp decrypt_property_value(value, nil, _realm) do
+    Logger.warning(
+      "Attempting to decrypt stored data failed due to missing decryption key",
+      tag: "stored_data_decryption_error"
+    )
+
+    nil
+  end
+
+  defp decrypt_property_value(value, ciphertext_dek, realm) do
+    # need to decrypt
+    with {:ok, dek} <- Secrets.decrypt_with_kek(realm, ciphertext_dek),
+         {:ok, decrypted_value} <- Secrets.decrypt_with_dek(value, dek) do
+      :erlang.binary_to_term(decrypted_value)
+    else
+      _ ->
+        Logger.warning(
+          "Issue encountered while attempting to decrypt stored data value",
+          tag: "stored_data_decryption_error"
+        )
+
+        nil
+    end
   end
 end
